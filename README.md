@@ -5,7 +5,8 @@ MahjongLM의 2024년 마작 로그에서 타패 결정을 추출하고, LLM으�
 ## 준비
 
 - Python 3.12 이상, `uv`
-- 데이터셋 접근 권한과 Hugging Face 로그인
+- 데이터셋: [mitsutani/mahjonglm-dataset](https://huggingface.co/datasets/mitsutani/mahjonglm-dataset)
+- 데이터 파일은 Hugging Face에서 사용 승인을 받은 계정으로 로그인해야 다운로드할 수 있습니다. 데이터셋 페이지에서 접근을 요청하고 승인을 받은 뒤 아래 명령으로 로그인하세요.
 
 ```powershell
 uv sync
@@ -41,6 +42,7 @@ OPENAI_MODEL=gpt-6-luna
 ```powershell
 # 손패의 서로 다른 후보 패 전부 평가
 uv run python review_all_discards.py --row 0
+uv run python review_all_discards.py --row 100 --limit 500 --workers 8 --output data/luna-medium
 
 # 실제로 버린 패 평가
 uv run python review_actual_discard.py --row 0
@@ -49,7 +51,7 @@ uv run python review_actual_discard.py --row 0
 uv run python review_all_discards.py --row 0 --sum-scores-to-100
 ```
 
-기본 결과는 `data/llm_reviews/row-<행 번호>-all.json` 또는 `row-<행 번호>-actual.json`에 저장됩니다. 결과에는 패 매수, 한글 패 이름, 점수, 이유, 본인 후로와 식별자가 포함됩니다. 이미 파일이 있으면 덮어쓰지 않고 건너뜁니다.
+전체 후보 결과는 기본 폴더 `data/llm_reviews`에 `row-<행 번호>.json`으로 저장됩니다. `--output`에 다른 폴더를 지정할 수 있습니다. 실제 타패 결과는 `data/llm_reviews/row-<행 번호>-actual.json`으로 저장됩니다. 결과에는 패 매수, 한글 패 이름, 점수, 이유, 본인 후로와 식별자가 포함됩니다. 이미 파일이 있으면 덮어쓰지 않고 건너뜁니다.
 
 `--row`는 0부터 시작하는 행 번호이며, `--limit`은 연속 처리할 행 수입니다. 예: `--row 100 --limit 10`. 동시 요청 수는 `--workers`로 조정할 수 있습니다.
 

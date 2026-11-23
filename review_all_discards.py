@@ -32,9 +32,8 @@ def process_one(index: int, decision: dict, args, client_options: dict) -> str:
         )
     if args.dry_run:
         return json.dumps({"row": index, "task": task, "board": board}, ensure_ascii=False, indent=2)
-    output = args.output or Path("data/llm_reviews") / f"row-{index}-all.json"
-    if args.output and args.limit > 1:
-        output = args.output.with_name(f"{args.output.stem}-row-{index}{args.output.suffix or '.json'}")
+    output_dir = args.output or Path("data/llm_reviews")
+    output = output_dir / f"row-{index}.json"
     if args.enrich_existing:
         if not output.exists():
             return f"missing: {output}"
@@ -96,7 +95,7 @@ def main() -> None:
         "--sum-scores-to-100", action="store_true",
         help="Prompt the model to allocate exactly 100 points across candidate tiles",
     )
-    parser.add_argument("--output", type=Path)
+    parser.add_argument("--output", type=Path, help="Output directory (default: data/llm_reviews)")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--enrich-existing", action="store_true", help="Compact existing JSON to scores, own melds, and identifiers without API calls")
     args = parser.parse_args()

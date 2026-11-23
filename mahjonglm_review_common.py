@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import tempfile
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 
 TILE = re.compile(r"(?:[mps][0-9]|z[1-7])$")
@@ -383,13 +383,27 @@ def evaluate(client, board: dict, output_type, task: str, model: str,
     ]
     last_error = "unknown validation error"
     for _ in range(max_attempts):
-        response = client.responses.parse(
-            model=model,
-            input=messages,
-            text_format=output_type,
-            max_output_tokens=max_output_tokens,
-            store=False,
-        )
+        try:
+            response = client.responses.parse(
+                model=model,
+                input=messages,
+                text_format=output_type,
+                max_output_tokens=max_output_tokens,
+                reasoning={"effort": "medium"},
+                store=False,
+            )
+        except ValidationError:
+            last_error = "Model response was incomplete or invalid structured JSON"
+            messages.append({
+                "role": "user",
+                "content": (
+                    "Your previous response was incomplete or invalid JSON. "
+                    "Return the entire required structured response as valid JSON, "
+                    "with every required candidate and all strings closed. "
+                    "Keep reasons concise enough to finish the response."
+                ),
+            })
+            continue
         status = getattr(response, "status", None)
         if status != "completed":
             detail = getattr(getattr(response, "incomplete_details", None), "reason", None)
